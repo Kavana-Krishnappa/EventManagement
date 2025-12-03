@@ -1,0 +1,14 @@
+Admin login:
+
+{
+  "email": "admin@gmail.com",
+  "passwordHash": "admin@123"
+}
+
+User Login:
+
+{
+  "email": "arpitha@gmail.com",
+  "password": "arpitha",
+  "role": "User"
+}

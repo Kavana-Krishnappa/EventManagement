@@ -1,0 +1,41 @@
+# ===== .NET (C#) =====
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+appsettings.*.json
+appsettings.Local.json
+*.db
+*.local
+
+# Rider / Resharper
+.idea/
+_ReSharper*/
+
+# ===== Visual Studio =====
+*.exe
+*.dll
+*.pdb
+
+# ===== Node / React =====
+node_modules/
+dist/
+build/
+.env
+.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== General =====
+.DS_Store
+Thumbs.db
+
+# If you create any publication packages
+*.zip
+*.tar.gz
+
+# Optional: ignore personal key files
+*.pem
