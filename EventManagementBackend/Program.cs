@@ -1,10 +1,11 @@
-﻿using EventManagement.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using EventManagement.Configurations;
+﻿using EventManagement.Configurations;
+using EventManagement.Models;
 using EventManagement.Repositories;
+using EventManagement.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add Repositories (Dependency Injection)
 builder.Services.AddScoped(typeof(IEventManagementRepository<>), typeof(GenericRepository<>));
+
+
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));

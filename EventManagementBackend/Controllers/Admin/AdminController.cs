@@ -1,5 +1,7 @@
-﻿using EventManagement.DTOs;
+﻿using BCrypt.Net;
+using EventManagement.DTOs;
 using EventManagement.Models;
+using EventManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using BCrypt.Net;
 
 namespace EventManagement.Controllers.Admin
 {
@@ -25,12 +26,14 @@ namespace EventManagement.Controllers.Admin
         private readonly IConfiguration _configuration;
         private readonly ILogger<AdminController> _logger;
         private readonly ApplicationDbContext _dbContext;
+        private readonly ITokenService _tokenService;
 
-        public AdminController(IConfiguration configuration, ILogger<AdminController> logger, ApplicationDbContext context)
+        public AdminController(IConfiguration configuration, ILogger<AdminController> logger, ApplicationDbContext context, ITokenService tokenService)
         {
             _configuration = configuration;
             _logger = logger;
             _dbContext = context;
+            _tokenService = tokenService;
         }
 
         //[Authorize(Roles = "Admin")]
@@ -70,8 +73,9 @@ namespace EventManagement.Controllers.Admin
                 return Unauthorized(new { message = "Invalid email or password." });
             }
 
+            var token = _tokenService.GenerateToken(admin);
 
-            var token = GenerateJwtToken(admin);
+            
             return Ok(new
             {
                 token,
@@ -92,39 +96,6 @@ namespace EventManagement.Controllers.Admin
 
 
 
-        private string GenerateJwtToken(Models.Admin admin)
-        {
-            //get security key
-            var key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("Jwt:key"));
-            
-            if (key==null)
-                throw new InvalidOperationException("JWT key is not configured.");
-
-            //create signing credentials
-            var securityKey = new SymmetricSecurityKey(key);
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            //add claims -- for authorization
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, admin.Email),
-                new Claim("id", admin.AdminId.ToString()),
-                new Claim(ClaimTypes.Role, admin.Role),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         
-
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Issuer"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: credentials
-            );
-
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
     }
 }

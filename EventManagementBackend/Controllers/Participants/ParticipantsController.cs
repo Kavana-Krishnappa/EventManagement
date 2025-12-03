@@ -2,6 +2,7 @@
 using EventManagement.DTOs;
 using EventManagement.Models;
 using EventManagement.Repositories;
+using EventManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,8 @@ namespace EventManagement.Controllers.Participants
         private readonly IMapper _mapper;
         private readonly IEventManagementRepository<Participant> _participantRepository;
         private readonly ApplicationDbContext _dbContext;
-        public ParticipantsController(IConfiguration configuration, ILogger<ParticipantsController> logger, IEventManagementRepository<Participant> participantRepository, IMapper mapper, ApplicationDbContext dbContext
+        private readonly ITokenService _tokenService;
+        public ParticipantsController(IConfiguration configuration, ILogger<ParticipantsController> logger, IEventManagementRepository<Participant> participantRepository, IMapper mapper, ApplicationDbContext dbContext, ITokenService tokenService
             )
         {
             _configuration = configuration;
@@ -41,7 +43,7 @@ namespace EventManagement.Controllers.Participants
             _mapper = mapper;
             _participantRepository = participantRepository;
             _dbContext = dbContext;
-
+            _tokenService = tokenService;
 
         }
 
@@ -54,13 +56,6 @@ namespace EventManagement.Controllers.Participants
         public async Task<ActionResult<IEnumerable<ParticipantDTO>>> GetAllParticipants()
         {
             _logger.LogInformation("Getting all participants");
-        //    var participants = _dbContext.Participants.Select(p => new ParticipantDTO()
-        //    {
-        //        ParticipantId = p.ParticipantId,
-        //        FullName = p.FullName,
-        //        Email = p.Email,
-        //        PhoneNumber = p.PhoneNumber
-        //    }).ToList();
 
             var participants = await _participantRepository.GetAllAsync();
             var participantDTOdata = _mapper.Map<List<ParticipantDTO>>(participants);
@@ -192,8 +187,8 @@ namespace EventManagement.Controllers.Participants
                 return Unauthorized(new { message = "Invalid email or password." });
             }
 
-           
-            var token = GenerateJwtToken(participant);
+
+            var token = _tokenService.GenerateToken(participant);
 
             return Ok(new
             {
@@ -216,31 +211,6 @@ namespace EventManagement.Controllers.Participants
 
 
 
-        private string GenerateJwtToken(Participant participant)
-        {
-            var key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("Jwt:key"));
-
-            var securityKey = new SymmetricSecurityKey(key);
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-        new Claim(JwtRegisteredClaimNames.Sub, participant.Email),
-        new Claim("id", participant.ParticipantId.ToString()),
-        new Claim(ClaimTypes.Role, participant.role),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Issuer"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
+        
     }
 }
