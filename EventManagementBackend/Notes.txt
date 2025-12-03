@@ -2,7 +2,7 @@ Admin login:
 
 {
   "email": "admin@gmail.com",
-  "passwordHash": "admin@123"
+  "passwordHash": "admin"
 }
 
 User Login:
