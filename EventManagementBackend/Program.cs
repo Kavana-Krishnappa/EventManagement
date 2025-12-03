@@ -14,26 +14,36 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
 
-// Add DbContext (EF Core)
+// Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("EventManagementDBConnection")));
 
-// Add Repositories (Dependency Injection)
+// Register Generic Repository
 builder.Services.AddScoped(typeof(IEventManagementRepository<>), typeof(GenericRepository<>));
 
-
+// Register Token Service
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+// Register Business Services
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IParticipantService, ParticipantService>();
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-
-
 builder.Services.AddSwaggerGen(options =>
 {
-    // Add JWT Bearer configuration to Swagger UI
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Event Management API",
+        Version = "v1",
+        Description = "API for managing events, participants, and registrations"
+    });
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -41,7 +51,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your JWT token below (with 'Bearer ' prefix)"
+        Description = "Enter 'Bearer' followed by a space and your JWT token"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -60,21 +70,26 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:3000")  // your React URL
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
+// Add JWT Authentication
+var jwtKey = builder.Configuration.GetValue<string>("Jwt:key");
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException("JWT key is not configured in appsettings.json");
+}
 
-
-var key = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("Jwt:key"));
+var key = Encoding.ASCII.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -88,50 +103,37 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,   
-        ValidateAudience = false, 
+        ValidateIssuer = false,
+        ValidateAudience = false,
         ClockSkew = TimeSpan.Zero
     };
 });
 
-
+// Add Authorization
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
 });
 
-
-
 var app = builder.Build();
 
+// Configure middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Event Management API V1");
-        c.RoutePrefix = string.Empty;  // Swagger at root URL
+        c.RoutePrefix = string.Empty;
     });
 }
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseCors("AllowReactApp");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
-
-app.UseEndpoints(endpoint =>
-{
-    endpoint.MapGet("/echo",
-        context => context.Response.WriteAsync(builder.Configuration.GetValue<string>("JWTSecret")));
-});
-
-// Map Controllers
 app.MapControllers();
 
-// Run the App
 app.Run();

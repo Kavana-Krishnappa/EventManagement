@@ -1,160 +1,69 @@
-﻿using AutoMapper;
-using EventManagement.Controllers.Events;
-using EventManagement.DTOs;
-using EventManagement.Models;
-using EventManagement.Repositories;
+﻿using EventManagement.DTOs;
+using EventManagement.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace EventManagement.Controllers.Registrations
 {
     [Route("api/[controller]")]
     [ApiController]
-    
     public class RegistrationsController : ControllerBase
     {
-        private readonly ILogger _logger;
-   
-        private readonly IMapper _mapper;
-        private readonly IEventManagementRepository<Registration> _registrationRepository;
+        private readonly IRegistrationService _registrationService;
 
-       
-        private readonly ApplicationDbContext _dbContext;
-
-        public RegistrationsController(IEventManagementRepository<Registration> registrationRepository, ILogger<RegistrationsController> logger, IMapper mapper, ApplicationDbContext dbContext)
+        public RegistrationsController(IRegistrationService registrationService)
         {
-            _logger = logger;
-            _mapper = mapper;
-            _dbContext = dbContext;
-            _registrationRepository = registrationRepository;
-           
-
+            _registrationService = registrationService;
         }
+
         [Authorize(Roles = "Admin")]
-        [HttpGet]
-        [Route("event/{id}/registrations", Name = "getregistrations")]
+        [HttpGet("event/{id:int}/registrations")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<RegistrationDTO>>> GetRegistrationsForEvent(int id)
         {
-            _logger.LogInformation("Fetching registrations for event {EventId}", id);
+            var result = await _registrationService.GetRegistrationsForEventAsync(id);
 
-          
-            var ev = await _dbContext.Events.FindAsync(id);
-            if (ev == null)
-                return NotFound("Event not found");
+            if (!result.Success)
+                return NotFound(new { message = result.Message });
 
-           
-            var registrations = await _dbContext.Registrations
-                .Where(r => r.EventId == id)
-                .Include(r => r.Participant)  
-                .Select(r => new RegistrationDTO
-                {
-                    RegistrationId = r.RegistrationId,
-                    EventId = r.EventId,
-                    ParticipantId = r.ParticipantId,
-                    Status = r.Status,
-                    RegisteredAt = r.RegisteredAt,
-                })
-                .ToListAsync();
-
-            return Ok(registrations);
+            return Ok(result.Data);
         }
 
         [Authorize(Roles = "Admin, User")]
-
-
-        [HttpPost]
-        [Route("event/{id}/register", Name = "registerparticipant")]
+        [HttpPost("event/{id:int}/register")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<RegistrationDTO>> RegisterParticipant(int id, [FromBody] RegistrationCreateDTO registrationCreateDTO)
+        public async Task<ActionResult<RegistrationDTO>> RegisterParticipant(int id, [FromBody] RegistrationCreateDTO registrationDTO)
         {
-            _logger.LogInformation("Registering participant for event");
+            var result = await _registrationService.RegisterParticipantAsync(id, registrationDTO);
 
-           
-            var ev = await _dbContext.Events.FindAsync(id);
-            if (ev == null)
-                return BadRequest("Event not found");
+            if (!result.Success)
+                return BadRequest(new { message = result.Message });
 
-            var participant = await _dbContext.Participants.FindAsync(registrationCreateDTO.ParticipantId);
-            if (participant == null)
-                return BadRequest("Participant not found");
-
-            var existingRegistration = _dbContext.Registrations
-                .FirstOrDefault(r => r.EventId == id && r.ParticipantId == registrationCreateDTO.ParticipantId);
-            if (existingRegistration != null)
-                return BadRequest("Participant is already registered for this event");
-
-            //CHECK MAX CAPACITY 
-            var currentRegistrations = _dbContext.Registrations
-                .Count(r => r.EventId == id && r.Status == "Confirmed");
-
-            if (currentRegistrations >= ev.MaxCapacity)
-                return BadRequest(new { message = "Event has reached maximum capacity" });
-
-
-            var registration = new Registration
-            {
-                EventId = id,
-                ParticipantId = registrationCreateDTO.ParticipantId,
-                Status = registrationCreateDTO.Status,
-                RegisteredAt = DateTime.UtcNow
-            };
-
-            _dbContext.Registrations.Add(registration);
-            _dbContext.SaveChanges();
-
-          
-            var responseDto = new RegistrationDTO
-            {
-                RegistrationId = registration.RegistrationId,
-                EventId = registration.EventId,
-                ParticipantId = registration.ParticipantId,
-                Status = registration.Status,
-                RegisteredAt = registration.RegisteredAt
-            };
-
-            return CreatedAtRoute("getregistrations", new { id = registration.RegistrationId }, responseDto);
+            return CreatedAtAction(nameof(GetRegistrationsForEvent), new { id = result.Data.EventId }, result.Data);
         }
 
         [Authorize(Roles = "Admin")]
-
-        [HttpDelete]
-        [Route("registration/{id}", Name = "deleteRegistration")]
+        [HttpDelete("registration/{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteRegistrationAsync(int id)
+        public async Task<IActionResult> DeleteRegistration(int id)
         {
-            _logger.LogInformation("Deleting registration with ID {RegistrationId}", id);
+            var result = await _registrationService.DeleteRegistrationAsync(id);
 
-            if (id <= 0)
-                return BadRequest("Invalid registration ID");
+            if (!result.Success)
+            {
+                if (result.Message.Contains("not found"))
+                    return NotFound(new { message = result.Message });
 
-   
-            var registration = await _registrationRepository.GetByIdAsync(id);
-            if (registration == null)
-                return NotFound("Registration not found");
-
-           
-            var isDeleted = await _registrationRepository.DeleteAsync(id);
-            if (!isDeleted)
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to delete registration");
+                return BadRequest(new { message = result.Message });
+            }
 
             return NoContent();
         }
-
-
-
     }
 }
