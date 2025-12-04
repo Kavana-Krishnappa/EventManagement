@@ -67,8 +67,9 @@ export default function LoginPage(){
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
-        <label>Email</label>
+        <label htmlFor="email">Email</label>
         <input
+        id="email"
           type="email"
           value={email}
           onChange={(e)=>setEmail(e.target.value)}
@@ -76,8 +77,9 @@ export default function LoginPage(){
           style={{ padding: 8, borderRadius: 4, border: "1px solid #ccc" }}
         />
 
-        <label>Password</label>
+        <label htmlFor="password">Password</label>
         <input
+        id="password"
           type="password"
           value={password}
           onChange={(e)=>setPassword(e.target.value)}
