@@ -25,6 +25,7 @@ describe('eventApi', () => {
     });
   });
 
+  //for await error
   /* eslint-disable testing-library/no-await-sync-query */
 
   describe('getById', () => {

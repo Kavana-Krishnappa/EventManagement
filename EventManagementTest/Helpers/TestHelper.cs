@@ -12,9 +12,8 @@ namespace EventManagementTests.Helpers
 {
     public static class TestHelper
     {
-        /// <summary>
-        /// Creates an in-memory database context for testing
-        /// </summary>
+        // Creates an in-memory database context for testing
+        
         public static ApplicationDbContext GetInMemoryDbContext()
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -24,9 +23,9 @@ namespace EventManagementTests.Helpers
             return new ApplicationDbContext(options);
         }
 
-        /// <summary>
-        /// Creates a configured AutoMapper instance
-        /// </summary>
+  
+        //Creates a configured AutoMapper instance
+      
         public static IMapper GetMapper()
         {
             var configuration = new MapperConfiguration(cfg =>
@@ -37,17 +36,17 @@ namespace EventManagementTests.Helpers
             return configuration.CreateMapper();
         }
 
-        /// <summary>
-        /// Creates a mock logger
-        /// </summary>
+   
+        // Creates a mock logger
+     
         public static Mock<ILogger<T>> GetMockLogger<T>()
         {
             return new Mock<ILogger<T>>();
         }
 
-        /// <summary>
-        /// Creates a mock configuration with JWT settings
-        /// </summary>
+   
+        //Creates a mock configuration with JWT settings
+        
         public static IConfiguration GetMockConfiguration()
         {
             var inMemorySettings = new Dictionary<string, string>
@@ -61,9 +60,8 @@ namespace EventManagementTests.Helpers
                 .Build();
         }
 
-        /// <summary>
-        /// Creates a test admin entity
-        /// </summary>
+        // Creates a test admin entity
+       
         public static Admin CreateTestAdmin(int id = 1, string email = "test@test.com")
         {
             return new Admin
@@ -77,9 +75,9 @@ namespace EventManagementTests.Helpers
             };
         }
 
-        /// <summary>
-        /// Creates a test event entity
-        /// </summary>
+     
+        // Creates a test event entity
+        
         public static Event CreateTestEvent(int id = 1, int adminId = 1, int maxCapacity = 100)
         {
             return new Event
@@ -94,9 +92,9 @@ namespace EventManagementTests.Helpers
             };
         }
 
-        /// <summary>
-        /// Creates a test participant entity
-        /// </summary>
+       
+        // Creates a test participant entity
+        
         public static Participant CreateTestParticipant(int id = 1, string email = "participant@test.com")
         {
             return new Participant
@@ -110,9 +108,9 @@ namespace EventManagementTests.Helpers
             };
         }
 
-        /// <summary>
-        /// Creates a test registration entity
-        /// </summary>
+     
+        //Creates a test registration entity
+       
         public static Registration CreateTestRegistration(int id = 1, int eventId = 1, int participantId = 1)
         {
             return new Registration

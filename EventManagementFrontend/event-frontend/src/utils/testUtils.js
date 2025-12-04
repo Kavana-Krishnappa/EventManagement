@@ -1,4 +1,4 @@
-// src/__tests__/utils/testUtils.js
+
 import React from 'react';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
@@ -10,9 +10,8 @@ import registrationsReducer from '../features/registrations/registrationsSlice';
 import participantsReducer from '../features/participants/participantsSlice';
 import signupReducer from '../features/auth/signupSlice';
 
-/**
- * Custom render function that includes Redux Provider and Router
- */
+//Custom render function that includes Redux Provider and Router
+ 
 export function renderWithProviders(
   ui,
   {
@@ -41,9 +40,9 @@ export function renderWithProviders(
   return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) };
 }
 
-/**
- * Create mock store with initial state
- */
+
+  //Create mock store with initial state
+ 
 export function createMockStore(initialState = {}) {
   return configureStore({
     reducer: {
@@ -57,9 +56,9 @@ export function createMockStore(initialState = {}) {
   });
 }
 
-/**
- * Mock authenticated user state
- */
+
+  //Mock authenticated user state
+ 
 export const mockAuthState = {
   token: 'mock-token-123',
   profile: {
@@ -72,9 +71,9 @@ export const mockAuthState = {
   error: null,
 };
 
-/**
- * Mock participant user state
- */
+
+ // Mock participant user state
+ 
 export const mockParticipantAuthState = {
   token: 'mock-token-456',
   profile: {
@@ -88,9 +87,9 @@ export const mockParticipantAuthState = {
   error: null,
 };
 
-/**
- * Mock events data
- */
+
+ // Mock events data
+ 
 export const mockEvents = [
   {
     eventId: 1,
@@ -112,9 +111,9 @@ export const mockEvents = [
   },
 ];
 
-/**
- * Mock registrations data
- */
+
+ //Mock registrations data
+ 
 export const mockRegistrations = [
   {
     registrationId: 1,
@@ -132,9 +131,9 @@ export const mockRegistrations = [
   },
 ];
 
-/**
- * Mock participants data
- */
+
+  //Mock participants data
+ 
 export const mockParticipants = [
   {
     participantId: 1,
@@ -150,9 +149,9 @@ export const mockParticipants = [
   },
 ];
 
-/**
- * Wait for async updates
- */
+
+ // Wait for async updates
+ 
 export const waitForAsync = () => new Promise(resolve => setTimeout(resolve, 0));
 
 // Re-export everything from React Testing Library

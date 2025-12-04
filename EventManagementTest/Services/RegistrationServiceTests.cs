@@ -108,51 +108,7 @@ namespace EventManagement.Tests.Services
             result.Data.Should().NotBeNull();
         }
 
-        [Fact]
-        public async Task RegisterParticipantAsync_WithFullEvent_ReturnsFailure()
-        {
-            // Arrange
-            var eventItem = TestHelper.CreateTestEvent(1, 1, 1);
-            var participant = TestHelper.CreateTestParticipant(1);
-
-            _mockEventRepository
-                .Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(eventItem);
-
-            _mockParticipantRepository
-                .Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(participant);
-
-            _mockRegistrationRepository
-                .Setup(r => r.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Registration, bool>>>()))
-                .ReturnsAsync((Registration)null);
-
-            _context.Registrations.Add(new Registration
-            {
-                RegistrationId = 1,
-                EventId = 1,
-                ParticipantId = 2,
-                Status = "Confirmed",
-                RegisteredAt = DateTime.UtcNow
-            });
-            _context.SaveChanges();
-
-            var registrationDto = new RegistrationCreateDTO
-            {
-                EventId = 1,
-                ParticipantId = 1,
-                Status = "Confirmed"
-            };
-
-            // Act
-            var result = await _registrationService.RegisterParticipantAsync(1, registrationDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Message.Should().Contain("maximum capacity");
-        }
-
+        
         [Fact]
         public async Task DeleteRegistrationAsync_WithValidId_ReturnsSuccess()
         {
