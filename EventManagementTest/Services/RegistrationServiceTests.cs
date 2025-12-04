@@ -3,6 +3,7 @@ using EventManagement.DTOs;
 using EventManagement.Models;
 using EventManagement.Repositories;
 using EventManagement.Services;
+
 using EventManagementTests.Helpers;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -65,8 +66,92 @@ namespace EventManagement.Tests.Services
             result.Data.Should().NotBeEmpty();
         }
 
-       
+        [Fact]
+        public async Task RegisterParticipantAsync_WithValidData_ReturnsSuccess()
+        {
+            // Arrange
+            var eventItem = TestHelper.CreateTestEvent(1, 1, 100);
+            var participant = TestHelper.CreateTestParticipant(1);
+            var registrationDto = new RegistrationCreateDTO
+            {
+                EventId = 1,
+                ParticipantId = 1,
+                Status = "Confirmed"
+            };
 
+            _mockEventRepository
+                .Setup(r => r.GetByIdAsync(1))
+                .ReturnsAsync(eventItem);
+
+            _mockParticipantRepository
+                .Setup(r => r.GetByIdAsync(1))
+                .ReturnsAsync(participant);
+
+            _mockRegistrationRepository
+                .Setup(r => r.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Registration, bool>>>()))
+                .ReturnsAsync((Registration)null);
+
+            _mockRegistrationRepository
+                .Setup(r => r.AddAsync(It.IsAny<Registration>()))
+                .ReturnsAsync((Registration reg) =>
+                {
+                    reg.RegistrationId = 1;
+                    return reg;
+                });
+
+            // Act
+            var result = await _registrationService.RegisterParticipantAsync(1, registrationDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task RegisterParticipantAsync_WithFullEvent_ReturnsFailure()
+        {
+            // Arrange
+            var eventItem = TestHelper.CreateTestEvent(1, 1, 1);
+            var participant = TestHelper.CreateTestParticipant(1);
+
+            _mockEventRepository
+                .Setup(r => r.GetByIdAsync(1))
+                .ReturnsAsync(eventItem);
+
+            _mockParticipantRepository
+                .Setup(r => r.GetByIdAsync(1))
+                .ReturnsAsync(participant);
+
+            _mockRegistrationRepository
+                .Setup(r => r.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Registration, bool>>>()))
+                .ReturnsAsync((Registration)null);
+
+            _context.Registrations.Add(new Registration
+            {
+                RegistrationId = 1,
+                EventId = 1,
+                ParticipantId = 2,
+                Status = "Confirmed",
+                RegisteredAt = DateTime.UtcNow
+            });
+            _context.SaveChanges();
+
+            var registrationDto = new RegistrationCreateDTO
+            {
+                EventId = 1,
+                ParticipantId = 1,
+                Status = "Confirmed"
+            };
+
+            // Act
+            var result = await _registrationService.RegisterParticipantAsync(1, registrationDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeFalse();
+            result.Message.Should().Contain("maximum capacity");
+        }
 
         [Fact]
         public async Task DeleteRegistrationAsync_WithValidId_ReturnsSuccess()

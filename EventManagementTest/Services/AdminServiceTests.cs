@@ -3,6 +3,7 @@ using EventManagement.DTOs;
 using EventManagement.Models;
 using EventManagement.Repositories;
 using EventManagement.Services;
+
 using EventManagementTests.Helpers;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -37,8 +38,8 @@ namespace EventManagement.Tests.Services
             );
         }
 
-      
-
+ 
+       
         [Fact]
         public async Task RegisterAsync_WithDuplicateEmail_ReturnsFailure()
         {
@@ -97,7 +98,7 @@ namespace EventManagement.Tests.Services
             result.Data.Admin.Email.Should().Be("admin@test.com");
         }
 
-      
+        
 
         [Fact]
         public async Task LoginAsync_WithInvalidPassword_ReturnsFailure()

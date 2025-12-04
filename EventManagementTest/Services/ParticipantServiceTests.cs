@@ -4,6 +4,7 @@ using EventManagement.Models;
 using EventManagement.Repositories;
 using EventManagement.Services;
 using EventManagementTests.Helpers;
+
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -84,8 +85,92 @@ namespace EventManagement.Tests.Services
             result.Data.ParticipantId.Should().Be(1);
         }
 
+        [Fact]
+        public async Task CreateParticipantAsync_WithValidData_ReturnsSuccess()
+        {
+            // Arrange
+            var participantDto = new ParticipantDTO
+            {
+                FullName = "New Participant",
+                Email = "new@test.com",
+                PhoneNumber = "1234567890",
+                Password = "Password@123",
+                Role = "User"
+            };
 
+            _mockParticipantRepository
+                .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<Participant, bool>>>()))
+                .ReturnsAsync(false);
 
-  
+            _mockParticipantRepository
+                .Setup(r => r.AddAsync(It.IsAny<Participant>()))
+                .ReturnsAsync((Participant p) =>
+                {
+                    p.ParticipantId = 1;
+                    return p;
+                });
+
+            // Act
+            var result = await _participantService.CreateParticipantAsync(participantDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.ParticipantId.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task CreateParticipantAsync_WithDuplicateEmail_ReturnsFailure()
+        {
+            // Arrange
+            var participantDto = new ParticipantDTO
+            {
+                FullName = "Test",
+                Email = "existing@test.com",
+                PhoneNumber = "1234567890",
+                Password = "Password@123",
+                Role = "User"
+            };
+
+            _mockParticipantRepository
+                .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<Participant, bool>>>()))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _participantService.CreateParticipantAsync(participantDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeFalse();
+            result.Message.Should().Contain("already exists");
+        }
+
+        [Fact]
+        public async Task LoginAsync_WithValidCredentials_ReturnsSuccess()
+        {
+            // Arrange
+            var participant = TestHelper.CreateTestParticipant(1, "participant@test.com");
+            var loginDto = new ParticipantLoginDTO
+            {
+                Email = "participant@test.com",
+                Password = "Test@123"
+            };
+
+            _mockParticipantRepository
+                .Setup(r => r.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Participant, bool>>>()))
+                .ReturnsAsync(participant);
+
+            _mockTokenService
+                .Setup(t => t.GenerateToken(It.IsAny<Participant>()))
+                .Returns("test-token");
+
+            // Act
+            var result = await _participantService.LoginAsync(loginDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Token.Should().Be("test-token");
+        }
     }
 }
