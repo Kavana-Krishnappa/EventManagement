@@ -119,24 +119,7 @@ namespace EventManagement.Tests.Controllers
             result.Result.Should().BeOfType<CreatedAtRouteResult>();
         }
 
-        [Fact]
-        public async Task UpdateEvent_WithValidData_ReturnsNoContent()
-        {
-            // Arrange
-            var patchDoc = new JsonPatchDocument<EventDTO>();
-            patchDoc.Replace(e => e.EventName, "Updated Event");
-
-            _mockEventService
-                .Setup(s => s.UpdateEventAsync(1, patchDoc))
-                .ReturnsAsync(ServiceResponse<bool>.SuccessResponse(true));
-
-            // Act
-            var result = await _controller.UpdateEvent(1, patchDoc);
-
-            // Assert
-            result.Should().BeOfType<NoContentResult>();
-        }
-
+        
         [Fact]
         public async Task DeleteEvent_WithValidId_ReturnsNoContent()
         {

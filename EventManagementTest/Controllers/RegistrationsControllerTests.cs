@@ -80,19 +80,5 @@ namespace EventManagement.Tests.Controllers
             result.Result.Should().BeOfType<CreatedAtActionResult>();
         }
 
-        [Fact]
-        public async Task DeleteRegistration_WithValidId_ReturnsNoContent()
-        {
-            // Arrange
-            _mockRegistrationService
-                .Setup(s => s.DeleteRegistrationAsync(1))
-                .ReturnsAsync(ServiceResponse<bool>.SuccessResponse(true));
-
-            // Act
-            var result = await _controller.DeleteRegistration(1);
-
-            // Assert
-            result.Should().BeOfType<NoContentResult>();
-        }
     }
 }

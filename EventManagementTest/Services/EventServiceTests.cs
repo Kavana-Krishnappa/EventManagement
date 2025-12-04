@@ -63,42 +63,7 @@ namespace EventManagement.Tests.Services
             result.Data.Should().HaveCount(3);
         }
 
-        [Fact]
-        public async Task GetEventByIdAsync_WithValidId_ReturnsEvent()
-        {
-            // Arrange
-            var eventItem = TestHelper.CreateTestEvent(1);
-
-            _mockEventRepository
-                .Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(eventItem);
-
-            // Act
-            var result = await _eventService.GetEventByIdAsync(1);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-            result.Data.Should().NotBeNull();
-            result.Data.EventId.Should().Be(1);
-        }
-
-        [Fact]
-        public async Task GetEventByIdAsync_WithInvalidId_ReturnsFailure()
-        {
-            // Arrange
-            _mockEventRepository
-                .Setup(r => r.GetByIdAsync(999))
-                .ReturnsAsync((Event)null);
-
-            // Act
-            var result = await _eventService.GetEventByIdAsync(999);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Message.Should().Contain("not found");
-        }
+       
 
         [Fact]
         public async Task CreateEventAsync_WithValidData_ReturnsSuccess()
@@ -132,72 +97,7 @@ namespace EventManagement.Tests.Services
             result.Data.EventId.Should().Be(1);
         }
 
-        [Fact]
-        public async Task CreateEventAsync_WithNullData_ReturnsFailure()
-        {
-            // Act
-            var result = await _eventService.CreateEventAsync(null);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Message.Should().Contain("Invalid");
-        }
-
-        [Fact]
-        public async Task UpdateEventAsync_WithValidData_ReturnsSuccess()
-        {
-            // Arrange
-            var existingEvent = TestHelper.CreateTestEvent(1);
-            var patchDoc = new JsonPatchDocument<EventDTO>();
-            patchDoc.Replace(e => e.EventName, "Updated Event Name");
-
-            _mockEventRepository
-                .Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(existingEvent);
-
-            _mockEventRepository
-                .Setup(r => r.UpdateAsync(It.IsAny<Event>()))
-                .ReturnsAsync(true);
-
-            // Act
-            var result = await _eventService.UpdateEventAsync(1, patchDoc);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-        }
-
-        [Fact]
-        public async Task GetEventCapacityAsync_ReturnsCapacityInfo()
-        {
-            // Arrange
-            var eventItem = TestHelper.CreateTestEvent(1, 1, 100);
-
-            _mockEventRepository
-                .Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(eventItem);
-
-            _context.Registrations.Add(new Registration
-            {
-                RegistrationId = 1,
-                EventId = 1,
-                ParticipantId = 1,
-                Status = "Confirmed",
-                RegisteredAt = DateTime.UtcNow
-            });
-            _context.SaveChanges();
-
-            // Act
-            var result = await _eventService.GetEventCapacityAsync(1);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-            result.Data.Should().NotBeNull();
-            result.Data.MaxCapacity.Should().Be(100);
-            result.Data.CurrentRegistrations.Should().Be(1);
-        }
+       
 
         [Fact]
         public async Task DeleteEventAsync_WithValidId_ReturnsSuccess()

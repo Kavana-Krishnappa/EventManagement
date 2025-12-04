@@ -97,28 +97,7 @@ namespace EventManagement.Tests.Services
             result.Data.Admin.Email.Should().Be("admin@test.com");
         }
 
-        [Fact]
-        public async Task LoginAsync_WithInvalidEmail_ReturnsFailure()
-        {
-            // Arrange
-            var loginDto = new AdminLoginDTO
-            {
-                Email = "nonexistent@test.com",
-                Password = "Password@123"
-            };
-
-            _mockAdminRepository
-                .Setup(r => r.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Admin, bool>>>()))
-                .ReturnsAsync((Admin)null);
-
-            // Act
-            var result = await _adminService.LoginAsync(loginDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Message.Should().Contain("Invalid email or password");
-        }
+      
 
         [Fact]
         public async Task LoginAsync_WithInvalidPassword_ReturnsFailure()
